@@ -477,13 +477,20 @@ CSE_ALifeItemWeapon::CSE_ALifeItemWeapon	(LPCSTR caSection) : CSE_ALifeItem(caSe
 	a_elapsed_grenades.grenades_count	=	0;
 	a_elapsed_grenades.grenades_type	=	0;
 
-	m_scope_idx                 = (u8)-1;
+	m_scope_idx                 = 0;
 
 	wpn_flags					= 0;
 	wpn_state					= 0;
 	ammo_type					= 0;
 
-	LoadAddons("scopes_sect");
+	if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
+	{
+		LoadAddons("scopes");
+	}
+	else
+	{
+		LoadAddons("scopes_sect");
+	}
 
 	m_fHitPower					= pSettings->r_float(caSection,"hit_power");
 	m_tHitType					= ALife::g_tfString2HitType(pSettings->r_string(caSection,"hit_type"));
@@ -506,6 +513,8 @@ CSE_ALifeItemWeapon::~CSE_ALifeItemWeapon	()
 
 void CSE_ALifeItemWeapon::LoadAddons(LPCSTR scopes_list)
 {
+	m_scopes.push_back(s_name.c_str());
+
 	if (pSettings->line_exist(s_name, scopes_list))
 		 {
 		LPCSTR str = pSettings->r_string(s_name, scopes_list);
@@ -540,22 +549,10 @@ void CSE_ALifeItemWeapon::clone_addons(CSE_ALifeItemWeapon* parent)
 
 void CSE_ALifeItemWeapon::AddonsLoad()
 {
-	if (m_scope_name.size() != 0 && m_scopes.size() != 0)
+	if (m_scope_name.size() != 0 )
 	{
-		SCOPES_VECTOR::iterator it = m_scopes.begin();
-		for (; it != m_scopes.end(); it++)
-		{
-			if ((*it) == m_scope_name)
-			{
-				m_scope_idx = u8(it - m_scopes.begin());
-				m_addon_flags.set(CSE_ALifeItemWeapon::eWeaponAddonScope, true);
-			}
-		}
-	}
-	else
-	{
-		m_scope_idx = (u8)-1;
-		m_addon_flags.set(CSE_ALifeItemWeapon::eWeaponAddonScope, false);
+		m_scope_idx = GetScopeIdx(m_scope_name);
+		m_addon_flags.set(CSE_ALifeItemWeapon::eWeaponAddonScope, (m_scope_idx == 0) ? false : true);
 	}
 	       
 }
@@ -563,11 +560,14 @@ void CSE_ALifeItemWeapon::AddonsLoad()
 u8 CSE_ALifeItemWeapon::GetScopeIdx(shared_str scope_name)
 {
 	if(!pSettings->section_exist(scope_name))
-		return (u8)-1;
+		return 0;
 
-	if (m_scopes.size() != 0)
+	if (scope_name.c_str() == s_name.c_str())
+		return 0;
+
+	if (m_scopes.size() > 1)
 	{
-		SCOPES_VECTOR::iterator it = m_scopes.begin();
+		SCOPES_VECTOR::iterator it = m_scopes.begin()+1;
 		for (; it != m_scopes.end(); it++)
 		{
 			if (pSettings->r_string((*it), "scope_name") == scope_name)
@@ -575,11 +575,11 @@ u8 CSE_ALifeItemWeapon::GetScopeIdx(shared_str scope_name)
 				return u8(it - m_scopes.begin());
 			}
 		}
-		return (u8)-1;
+		return 0;
 	}
 	else
 	{
-		return (u8)-1;
+		return 0;
 	}
 }
 

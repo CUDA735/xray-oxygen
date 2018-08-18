@@ -86,7 +86,7 @@ void CSE_ALifeObject::spawn_supplies		(LPCSTR ini_string)
 						if (alt_scope)
 						{							
 							u8 idx = W->GetScopeIdx(st.c_str());
-							bScope = (idx != (u8)-1) ? true : false;
+							bScope = (idx != 0) ? true : false;
 							W->m_scope_idx = idx;
 						}
 							

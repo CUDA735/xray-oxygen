@@ -47,6 +47,7 @@ public:
 	virtual CMagazine		*cast_magazine			()					{return 0;}
 	virtual CWeaponMagazined*cast_weapon_magazined	()					{return 0;}
 
+	//stcop
 
 	//serialization
 	virtual void			save				(NET_Packet &output_packet);
@@ -72,6 +73,10 @@ public:
 	virtual	void			Hit					(SHit* pHDS);
 
 	void                   UpdateSecondVP       ();
+
+	//for stcop weapon pack
+	virtual void            LoadScopes(LPCSTR section);
+	void                    UpdateScopeVisual();
 
 	virtual void			reinit				();
 	virtual void			reload				(LPCSTR section);
@@ -168,15 +173,15 @@ public:
 	float GetHudFov();
 
 	//для отоброажения иконок апгрейдов в интерфейсе
-	int	GetScopeX() {return pSettings->r_s32(m_scopes[m_cur_scope].c_str(), "scope_x");}
-	int	GetScopeY() {return pSettings->r_s32(m_scopes[m_cur_scope].c_str(), "scope_y");}
+	int	GetScopeX();
+	int	GetScopeY();
 	int	GetSilencerX() {return m_iSilencerX;}
 	int	GetSilencerY() {return m_iSilencerY;}
 	int	GetGrenadeLauncherX() {return m_iGrenadeLauncherX;}
 	int	GetGrenadeLauncherY() {return m_iGrenadeLauncherY;}
 
 	const std::string& GetGrenadeLauncherName	() const{return m_sGrenadeLauncherName;}
-	const std::string GetScopeName				() const{return pSettings->r_string(m_scopes[m_cur_scope].c_str(), "scope_name");}
+	const std::string GetScopeName() const;
 	const std::string& GetSilencerName			() const{return m_sSilencerName;}
 
 	IC void	ForceUpdateAmmo						()		{ m_BriefInfo_CalcFrame = 0; }

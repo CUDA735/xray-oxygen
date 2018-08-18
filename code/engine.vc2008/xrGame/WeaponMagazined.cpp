@@ -801,15 +801,40 @@ bool CWeaponMagazined::CanAttach(PIItem pIItem)
 	CGrenadeLauncher* pGrenadeLauncher = smart_cast<CGrenadeLauncher*>(pIItem);
 
 	// Прицел
-	if (pScope && m_eScopeStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
+	if (pScope)
 	{
-		for (xr_string it : m_scopes)
+		if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 		{
-			shared_str scop_name = pSettings->r_string_wb(it.c_str(), "scope_name");
-			if (scop_name == pIItem->object().cNameSect())
-				return true;
+			if ((m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
+			{
+				for (xr_string it : m_scopes)
+				{
+					if (xr_strcmp(it.c_str(), m_section_id.c_str()))
+					{
+						if (it._Equal(pIItem->object().cNameSect().c_str()))
+						return true;
+					}
+					
+				}
+				return false;
+			}
 		}
-		return false;
+		else
+		{
+			if (m_eScopeStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
+			{
+				for (xr_string it : m_scopes)
+				{
+					if (xr_strcmp(it.c_str(), m_section_id.c_str()))
+					{
+						shared_str scop_name = pSettings->r_string_wb(it.c_str(), "scope_name");
+						if (scop_name == pIItem->object().cNameSect())
+							return true;
+					}
+				}
+				return false;
+			}
+		}
 	}
     // Глушитель
 	else if (pSilencer && m_eSilencerStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonSilencer) == 0 && (m_sSilencerName == pIItem->object().cNameSect().c_str()))
@@ -825,15 +850,35 @@ bool CWeaponMagazined::CanAttach(PIItem pIItem)
 bool CWeaponMagazined::CanDetach(const char* item_section_name)
 {
 	// Прицел
-	if (m_eScopeStatus == ALife::eAddonAttachable && 0 != (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope))
+	if (0 != (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope))
 	{
-		for (xr_string it : m_scopes)
+		if (g_extraFeatures.is(GAME_EXTRA_STCOPWP) && m_eScopeStatus != ALife::eAddonPermanent)
 		{
-			shared_str scope = pSettings->r_string_wb(it.c_str(), "scope_name");
-			if (scope.equal(item_section_name))
-				return true;
+			for (xr_string it : m_scopes)
+			{
+				if (xr_strcmp(it.c_str(), m_section_id.c_str()))
+				{
+					if(it._Equal(item_section_name))
+						return true;
+				}
+			}
+			return false;
+
 		}
-		return false;
+		else if((m_eScopeStatus == ALife::eAddonAttachable))
+		{
+			for (xr_string it : m_scopes)
+			{
+				if (xr_strcmp(it.c_str(), m_section_id.c_str()))
+				{
+					shared_str scope = pSettings->r_string_wb(it.c_str(), "scope_name");
+					if (scope.equal(item_section_name))
+						return true;
+				}
+			}
+			return false;
+		}
+
 	}
 	// Глушитель
 	else if (m_eSilencerStatus == ALife::eAddonAttachable && 0 != (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonSilencer) && (m_sSilencerName == item_section_name))
@@ -855,17 +900,32 @@ bool CWeaponMagazined::Attach(PIItem pIItem, bool b_send_event)
 	CGrenadeLauncher* pGrenadeLauncher = smart_cast<CGrenadeLauncher*>(pIItem);
 	
 	// Прицел
-	if (pScope && m_eScopeStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
+	if (pScope && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
 	{
-		
-		for (auto it = m_scopes.begin(); it != m_scopes.end(); it++)
+		if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 		{
-			if (pIItem->object().cNameSect().equal(pSettings->r_string_wb((*it).c_str(), "scope_name")))
-				m_cur_scope = u8(it - m_scopes.begin());
-		}
+			for (auto it = m_scopes.begin() + 1; it != m_scopes.end(); it++)
+			{
+				if (pIItem->object().cNameSect().equal((*it).c_str()))
+					m_cur_scope = u8(it - m_scopes.begin());
+			}
 
-		m_flagsAddOnState |= CSE_ALifeItemWeapon::eWeaponAddonScope;
-		result = true;
+			m_flagsAddOnState |= CSE_ALifeItemWeapon::eWeaponAddonScope;
+			result = true;
+		}
+		else if(m_eScopeStatus == ALife::eAddonAttachable)
+		{
+			
+			for (auto it = m_scopes.begin() + 1; it != m_scopes.end(); it++)
+			{
+				if (pIItem->object().cNameSect().equal(pSettings->r_string_wb((*it).c_str(), "scope_name")))
+					m_cur_scope = u8(it - m_scopes.begin());
+			}
+
+			m_flagsAddOnState |= CSE_ALifeItemWeapon::eWeaponAddonScope;
+			result = true;
+		}
+		
 	}
 	// Глушитель
 	else if (pSilencer && m_eSilencerStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonSilencer) == 0 &&
@@ -904,11 +964,23 @@ bool CWeaponMagazined::DetachScope(const char* item_section_name, bool b_spawn_i
 	bool detached = false;
 	for (xr_string it : m_scopes)
 	{
-		LPCSTR iter_scope_name = pSettings->r_string(it.c_str(), "scope_name");
-		if (!xr_strcmp(iter_scope_name, item_section_name))
-		{
-			m_cur_scope = NULL;
-			detached = true;
+		if (xr_strcmp(it.c_str(), m_section_id.c_str()))
+		{   
+			LPCSTR iter_scope_name;
+
+			if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
+			{
+				iter_scope_name = it.c_str();
+			}
+			else
+			{
+				iter_scope_name = pSettings->r_string(it.c_str(), "scope_name");
+			}
+				if (!xr_strcmp(iter_scope_name, item_section_name))
+				{
+					m_cur_scope = NULL;
+					detached = true;
+				}
 		}
 	}
 
@@ -917,9 +989,11 @@ bool CWeaponMagazined::DetachScope(const char* item_section_name, bool b_spawn_i
 
 bool CWeaponMagazined::Detach(const char* item_section_name, bool b_spawn_item)
 {
-	if(		m_eScopeStatus == ALife::eAddonAttachable &&
-			DetachScope(item_section_name, b_spawn_item))
+	if(m_eScopeStatus != ALife::eAddonPermanent && DetachScope(item_section_name, b_spawn_item))
 	{
+		if (m_eScopeStatus != ALife::eAddonAttachable && !g_extraFeatures.is(GAME_EXTRA_STCOPWP))
+			return false;
+
 		if ((m_flagsAddOnState & CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
 		{
 			Msg("ERROR: scope addon already detached.");
@@ -968,45 +1042,92 @@ void CWeaponMagazined::InitAddons()
 {
 	m_zoom_params.m_fIronSightZoomFactor = READ_IF_EXISTS(pSettings, r_float, cNameSect(), "ironsight_zoom_factor", 50.0f);
 
-	if (IsScopeAttached())
+	if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 	{
-		if (m_eScopeStatus == ALife::eAddonAttachable)
+		UpdateScopeVisual();
+
+		if (IsScopeAttached())
 		{
-			shared_str scope_tex_name = pSettings->r_string(GetScopeName().c_str(), "scope_texture");
-			m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
-			m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, GetScopeName().c_str(), "scope_dynamic_zoom", false);
+			if (m_eScopeStatus != ALife::eAddonPermanent)
+			{
+				string128 str;
+				xr_sprintf(str, "%s_%s", cNameSect().c_str(), m_scopes[m_cur_scope].c_str());
+				shared_str scope_tex_name = READ_IF_EXISTS(pSettings, r_string, str, "scope_texture", nullptr);
+				m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(str, "scope_zoom_factor");
+				m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, str, "scope_dynamic_zoom", false);
 
-			try
-			{
-				m_zoom_params.m_sUseZoomPostprocess = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_nightvision", nullptr);
-			}
-			catch (...)
-			{
-				m_zoom_params.m_sUseZoomPostprocess = nullptr;
-			}
-			try
-			{
-				m_zoom_params.m_sUseBinocularVision = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_alive_detector", nullptr);
-			}
-			catch (...)
-			{
-				m_zoom_params.m_sUseBinocularVision = nullptr;
+				try
+				{
+					m_zoom_params.m_sUseZoomPostprocess = READ_IF_EXISTS(pSettings, r_string, str, "scope_nightvision", nullptr);
+				}
+				catch (...)
+				{
+					m_zoom_params.m_sUseZoomPostprocess = nullptr;
+				}
+				try
+				{
+					m_zoom_params.m_sUseBinocularVision = READ_IF_EXISTS(pSettings, r_string, str, "scope_alive_detector", nullptr);
+				}
+				catch (...)
+				{
+					m_zoom_params.m_sUseBinocularVision = nullptr;
+				}
+
+				xr_delete(m_UIScope);
+
+				if (scope_tex_name != nullptr)
+				{
+					m_UIScope = xr_new<CUIWindow>();
+					createWpnScopeXML();
+					CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
+				}
 			}
 
-			xr_delete(m_UIScope);
-
-			m_UIScope = xr_new<CUIWindow>();
-			createWpnScopeXML();
-			CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
 		}
 	}
 	else
 	{
-		xr_delete(m_UIScope);
+		if (IsScopeAttached())
+		{
+			if (m_eScopeStatus == ALife::eAddonAttachable)
+			{
+				shared_str scope_tex_name = pSettings->r_string(GetScopeName().c_str(), "scope_texture");
+				m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
+				m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, GetScopeName().c_str(), "scope_dynamic_zoom", false);
 
-		if (IsZoomEnabled())
-			m_zoom_params.m_fIronSightZoomFactor = pSettings->r_float(cNameSect(), "scope_zoom_factor");
+				try
+				{
+					m_zoom_params.m_sUseZoomPostprocess = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_nightvision", nullptr);
+				}
+				catch (...)
+				{
+					m_zoom_params.m_sUseZoomPostprocess = nullptr;
+				}
+				try
+				{
+					m_zoom_params.m_sUseBinocularVision = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_alive_detector", nullptr);
+				}
+				catch (...)
+				{
+					m_zoom_params.m_sUseBinocularVision = nullptr;
+				}
+
+				xr_delete(m_UIScope);
+
+				m_UIScope = xr_new<CUIWindow>();
+				createWpnScopeXML();
+				CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
+			}
+		}
+		else
+		{
+			xr_delete(m_UIScope);
+
+			if (IsZoomEnabled())
+				m_zoom_params.m_fIronSightZoomFactor = pSettings->r_float(cNameSect(), "scope_zoom_factor");
+		}
 	}
+	
 
 	if (IsSilencerAttached())
 	{		
@@ -1380,7 +1501,9 @@ bool CWeaponMagazined::install_upgrade_impl(LPCSTR section, bool test)
 	result |= process_if_exists(section, "ironsight_zoom_factor", &CInifile::r_float, m_zoom_params.m_fIronSightZoomFactor, test);
 
 	if (IsScopeAttached())
+	{
 		result |= process_if_exists(section, "scope_zoom_factor", &CInifile::r_float, m_zoom_params.m_fScopeZoomFactor, test);
+	}
 	else
 		if (IsZoomEnabled())
 			result |= process_if_exists(section, "scope_zoom_factor", &CInifile::r_float, m_zoom_params.m_fIronSightZoomFactor, test);

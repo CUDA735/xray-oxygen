@@ -1950,6 +1950,7 @@ void CCC_RegisterCommands()
     CMD3(CCC_MaskNoSave, "game_extra_spawn_antifreeze", &g_extraFeatures, GAME_EXTRA_SPAWN_ANTIFREEZE);
     CMD3(CCC_MaskNoSave, "game_extra_weapon_autoreload", &g_extraFeatures, GAME_EXTRA_WEAPON_AUTORELOAD);
     CMD3(CCC_MaskNoSave, "game_extra_dynamic_sun_movement", &g_extraFeatures, GAME_EXTRA_DYNAMIC_SUN);
+	CMD3(CCC_MaskNoSave, "game_extra_stcopwp", &g_extraFeatures, GAME_EXTRA_STCOPWP);
     CMD3(CCC_MaskNoSave, "game_extra_hold_to_pickup", &g_extraFeatures, GAME_EXTRA_HOLD_TO_PICKUP);
     CMD3(CCC_MaskNoSave, "game_extra_polter_show_particles_on_dead", &g_extraFeatures, GAME_EXTRA_POLTER_SHOW_PARTICLES_ON_DEAD);
     CMD3(CCC_MaskNoSave, "game_extra_soc_talk_wnd", &g_extraFeatures, GAME_EXTRA_SOC_WND);

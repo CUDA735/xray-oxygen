@@ -322,8 +322,10 @@ void CUIWeaponCellItem::OnAfterChild(CUIDragDropListEx* parent_list)
 	if(is_silencer() && GetIcon(eSilencer))
 		InitAddon	(GetIcon(eSilencer), object()->GetSilencerName().c_str(),	m_addon_offset[eSilencer], parent_list->GetVerticalPlacement());
 
-	if(is_scope() && GetIcon(eScope))
-		InitAddon	(GetIcon(eScope),	object()->GetScopeName().c_str(),		m_addon_offset[eScope], parent_list->GetVerticalPlacement());
+	if (is_scope() && GetIcon(eScope))
+	{
+		InitAddon(GetIcon(eScope), object()->GetScopeName().c_str(), m_addon_offset[eScope], parent_list->GetVerticalPlacement());
+	}
 
 	if(is_launcher() && GetIcon(eLauncher))
 		InitAddon	(GetIcon(eLauncher), object()->GetGrenadeLauncherName().c_str(),m_addon_offset[eLauncher], parent_list->GetVerticalPlacement());
