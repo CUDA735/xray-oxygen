@@ -575,6 +575,17 @@ void CWeapon::UpdateScopeVisual()
 		}
 
 	}
+	else
+	{
+		shared_str vis = pSettings->r_string(cNameSect().c_str(), "visual");
+		cNameVisual_set(vis);
+		shared_str hud_sect_new = pSettings->r_string(cNameSect().c_str(), "hud");
+		if (hud_sect != hud_sect_new)
+		{
+			hud_sect = hud_sect_new;
+			m_animation_slot = pSettings->r_u32(cNameSect().c_str(), "animation_slot");
+		}
+	}
 
 }
 
@@ -1526,7 +1537,15 @@ const std::string  CWeapon::GetScopeName() const
 		return m_section_id.c_str();
 	else
 	{
-		return pSettings->r_string(m_scopes[m_cur_scope].c_str(), "scope_name");
+		if (g_extraFeatures.is(GAME_EXTRA_STCOPWP))
+		{
+			return m_scopes[m_cur_scope].c_str();
+		}
+		else
+		{
+			return pSettings->r_string(m_scopes[m_cur_scope].c_str(), "scope_name");
+		}
+		
 	}
 
 }
@@ -1590,10 +1609,9 @@ void CWeapon::reload(LPCSTR section)
 		m_can_be_strapped = false;
 		m_can_be_strapped_rifle = false;
 	}
-
-	if (m_eScopeStatus == ALife::eAddonAttachable && GetScopeName().c_str()!= m_section_id.c_str())
+	
+	if (m_eScopeStatus == ALife::eAddonAttachable && !GetScopeName()._Equal(m_section_id.c_str()))
 	{
-		Msg("WPN_NAME = %s",m_section_id.c_str());
 		m_addon_holder_range_modifier = READ_IF_EXISTS(pSettings, r_float, GetScopeName().c_str(), "holder_range_modifier", m_holder_range_modifier);
 		m_addon_holder_fov_modifier = READ_IF_EXISTS(pSettings, r_float, GetScopeName().c_str(), "holder_fov_modifier", m_holder_fov_modifier);
 	}

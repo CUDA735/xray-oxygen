@@ -865,7 +865,7 @@ bool CWeaponMagazined::CanDetach(const char* item_section_name)
 			return false;
 
 		}
-		else if((m_eScopeStatus == ALife::eAddonAttachable))
+		else if((m_eScopeStatus == ALife::eAddonAttachable) && !g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 		{
 			for (xr_string it : m_scopes)
 			{
@@ -913,7 +913,7 @@ bool CWeaponMagazined::Attach(PIItem pIItem, bool b_send_event)
 			m_flagsAddOnState |= CSE_ALifeItemWeapon::eWeaponAddonScope;
 			result = true;
 		}
-		else if(m_eScopeStatus == ALife::eAddonAttachable)
+		else if(m_eScopeStatus == ALife::eAddonAttachable && !g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 		{
 			
 			for (auto it = m_scopes.begin() + 1; it != m_scopes.end(); it++)
@@ -1083,6 +1083,10 @@ void CWeaponMagazined::InitAddons()
 				}
 			}
 
+		}
+		else
+		{
+			xr_delete(m_UIScope);
 		}
 	}
 	else

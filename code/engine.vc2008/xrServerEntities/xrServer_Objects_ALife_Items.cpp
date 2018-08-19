@@ -570,10 +570,20 @@ u8 CSE_ALifeItemWeapon::GetScopeIdx(shared_str scope_name)
 		SCOPES_VECTOR::iterator it = m_scopes.begin()+1;
 		for (; it != m_scopes.end(); it++)
 		{
-			if (pSettings->r_string((*it), "scope_name") == scope_name)
+			if (!g_extraFeatures.is(GAME_EXTRA_STCOPWP))
 			{
-				return u8(it - m_scopes.begin());
+				if (pSettings->r_string((*it), "scope_name") == scope_name)
+				{
+					return u8(it - m_scopes.begin());
+				}
 			}
+			else
+			{
+				if(it->equal(scope_name))
+					return u8(it - m_scopes.begin());
+
+			}
+
 		}
 		return 0;
 	}
