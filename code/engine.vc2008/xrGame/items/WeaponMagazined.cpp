@@ -463,7 +463,6 @@ void CWeaponMagazined::OnStateSwitch(u32 S, u32 oldState)
 	}
 }
 
-
 void CWeaponMagazined::UpdateCL()
 {
 	inherited::UpdateCL();
@@ -830,7 +829,13 @@ bool CWeaponMagazined::CanAttach(PIItem pIItem)
 	{
 		for (xr_string it : m_scopes)
 		{
-			shared_str scop_name = pSettings->r_string_wb(it.c_str(), "scope_name");
+			shared_str scop_name;
+
+			if (UseAltScope)
+				scop_name = it.c_str();
+			else
+				scop_name = pSettings->r_string_wb(it.c_str(), "scope_name");
+
 			if (scop_name == pIItem->object().cNameSect())
 				return true;
 		}
@@ -854,7 +859,13 @@ bool CWeaponMagazined::CanDetach(const char* item_section_name)
 	{
 		for (xr_string it : m_scopes)
 		{
-			shared_str scope = pSettings->r_string_wb(it.c_str(), "scope_name");
+			shared_str scope;
+
+			if(UseAltScope)
+				scope = it.c_str();
+			else
+				scope = pSettings->r_string_wb(it.c_str(), "scope_name");
+
 			if (scope.equal(item_section_name))
 				return true;
 		}
@@ -878,15 +889,26 @@ bool CWeaponMagazined::Attach(PIItem pIItem, bool b_send_event)
 	CScope*	pScope = smart_cast<CScope*>(pIItem);
 	CSilencer* pSilencer = smart_cast<CSilencer*>(pIItem);
 	CGrenadeLauncher* pGrenadeLauncher = smart_cast<CGrenadeLauncher*>(pIItem);
-	
+
 	// Прицел
 	if (pScope && m_eScopeStatus == ALife::eAddonAttachable && (m_flagsAddOnState&CSE_ALifeItemWeapon::eWeaponAddonScope) == 0)
 	{
 		
 		for (auto it = m_scopes.begin(); it != m_scopes.end(); it++)
 		{
-			if (pIItem->object().cNameSect().equal(pSettings->r_string_wb((*it).c_str(), "scope_name")))
-				m_cur_scope = u8(it - m_scopes.begin());
+
+			if (UseAltScope)
+			{
+				if (pIItem->object().cNameSect().equal((*it).c_str()))
+					m_cur_scope = u8(it - m_scopes.begin());
+			}
+			else
+			{
+				if (pIItem->object().cNameSect().equal(pSettings->r_string_wb((*it).c_str(), "scope_name")))
+					m_cur_scope = u8(it - m_scopes.begin());
+			}
+
+
 		}
 
 		m_flagsAddOnState |= CSE_ALifeItemWeapon::eWeaponAddonScope;
@@ -914,7 +936,7 @@ bool CWeaponMagazined::Attach(PIItem pIItem, bool b_send_event)
 			// Уничтожить подсоединенную вещь из инвентаря
 			pIItem->object().DestroyObject	();
 		};
-
+		UpdateAltScope();
 		UpdateAddonsVisibility();
 		InitAddons();
 
@@ -929,7 +951,12 @@ bool CWeaponMagazined::DetachScope(const char* item_section_name, bool b_spawn_i
 	bool detached = false;
 	for (xr_string it : m_scopes)
 	{
-		LPCSTR iter_scope_name = pSettings->r_string(it.c_str(), "scope_name");
+		LPCSTR iter_scope_name;
+		if (UseAltScope)
+			iter_scope_name = it.c_str();
+		else
+			iter_scope_name = pSettings->r_string(it.c_str(), "scope_name");
+
 		if (!xr_strcmp(iter_scope_name, item_section_name))
 		{
 			m_cur_scope = NULL;
@@ -951,7 +978,7 @@ bool CWeaponMagazined::Detach(const char* item_section_name, bool b_spawn_item)
 			return true;
 		}
 		m_flagsAddOnState &= ~CSE_ALifeItemWeapon::eWeaponAddonScope;
-		
+		UpdateAltScope();
 		UpdateAddonsVisibility();
 		InitAddons();
 
@@ -980,7 +1007,6 @@ bool CWeaponMagazined::Detach(const char* item_section_name, bool b_spawn_item)
 			return true;
 		}
 		m_flagsAddOnState &= ~CSE_ALifeItemWeapon::eWeaponAddonGrenadeLauncher;
-
 		UpdateAddonsVisibility();
 		InitAddons();
 		return CInventoryItemObject::Detach(item_section_name, b_spawn_item);
@@ -997,32 +1023,51 @@ void CWeaponMagazined::InitAddons()
 	{
 		if (m_eScopeStatus == ALife::eAddonAttachable)
 		{
-			shared_str scope_tex_name = pSettings->r_string(GetScopeName().c_str(), "scope_texture");
-			m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
-			m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, GetScopeName().c_str(), "scope_dynamic_zoom", false);
+			if(pSettings->line_exist(GetScopeName().c_str(),"scope_texture"))
+			{
+				shared_str scope_tex_name = pSettings->r_string(GetScopeName().c_str(), "scope_texture");
 
-			try
-			{
-				m_zoom_params.m_sUseZoomPostprocess = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_nightvision", nullptr);
+				if (xr_strcmp(scope_tex_name, "none") != 0)
+				{
+					ScopeHasTexture = true;
+
+					m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
+					m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, GetScopeName().c_str(), "scope_dynamic_zoom", false);
+
+					try
+					{
+						m_zoom_params.m_sUseZoomPostprocess = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_nightvision", nullptr);
+					}
+					catch (...)
+					{
+						m_zoom_params.m_sUseZoomPostprocess = nullptr;
+					}
+					try
+					{
+						m_zoom_params.m_sUseBinocularVision = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_alive_detector", nullptr);
+					}
+					catch (...)
+					{
+						m_zoom_params.m_sUseBinocularVision = nullptr;
+					}
+
+					xr_delete(m_UIScope);
+
+					m_UIScope = xr_new<CUIWindow>();
+					createWpnScopeXML();
+					CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
+				}
+				else
+				{
+					ScopeHasTexture = false;
+				}
 			}
-			catch (...)
+			else
 			{
-				m_zoom_params.m_sUseZoomPostprocess = nullptr;
-			}
-			try
-			{
-				m_zoom_params.m_sUseBinocularVision = READ_IF_EXISTS(pSettings, r_string, GetScopeName().c_str(), "scope_alive_detector", nullptr);
-			}
-			catch (...)
-			{
-				m_zoom_params.m_sUseBinocularVision = nullptr;
+				xr_delete(m_UIScope);
+				ScopeHasTexture = false;
 			}
 
-			xr_delete(m_UIScope);
-
-			m_UIScope = xr_new<CUIWindow>();
-			createWpnScopeXML();
-			CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
 		}
 	}
 	else
