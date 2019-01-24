@@ -1026,12 +1026,12 @@ void CWeaponMagazined::InitAddons()
 			if(pSettings->line_exist(GetScopeName().c_str(),"scope_texture"))
 			{
 				shared_str scope_tex_name = pSettings->r_string(GetScopeName().c_str(), "scope_texture");
-
+				m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
 				if (xr_strcmp(scope_tex_name, "none") != 0)
 				{
 					ScopeHasTexture = true;
 
-					m_zoom_params.m_fScopeZoomFactor = pSettings->r_float(GetScopeName().c_str(), "scope_zoom_factor");
+					
 					m_zoom_params.m_bUseDynamicZoom = READ_IF_EXISTS(pSettings, r_bool, GetScopeName().c_str(), "scope_dynamic_zoom", false);
 
 					try
