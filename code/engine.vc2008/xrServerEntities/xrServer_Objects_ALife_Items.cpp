@@ -573,10 +573,22 @@ u8 CSE_ALifeItemWeapon::GetScopeIdx(shared_str scope_name)
 		SCOPES_VECTOR::iterator it = m_scopes.begin();
 		for (; it != m_scopes.end(); it++)
 		{
-			if (pSettings->r_string((*it), "scope_name") == scope_name)
+
+			if (m_use_alt_scope)
 			{
-				return u8(it - m_scopes.begin());
+				if ((*it) == scope_name)
+				{
+					return u8(it - m_scopes.begin());
+				}
 			}
+			else
+			{
+				if (pSettings->r_string((*it), "scope_name") == scope_name)
+				{
+					return u8(it - m_scopes.begin());
+				}
+			}
+
 		}
 		return (u8)-1;
 	}
