@@ -780,6 +780,8 @@ void CWeaponMagazined::switch2_Showing()
 	PlayAnimShow();
 }
 
+#include "CustomDetector.h"
+
 bool CWeaponMagazined::Action(u16 cmd, u32 flags) 
 {
 	if (inherited::Action(cmd, flags)) 
@@ -795,7 +797,15 @@ bool CWeaponMagazined::Action(u16 cmd, u32 flags)
 	    {
 			if (iAmmoElapsed < iMagazineSize || IsMisfire())
 			{
-				Reload();
+				// Rietmon: Запрещаем перезарядку, если активен детектор
+				PIItem Det = Actor()->inventory().ItemFromSlot(DETECTOR_SLOT);
+				if (!Det) Reload(); // Rietmon: Если в слоте нету детектора, то он не может быть активен
+
+				if (Det)
+				{
+					CCustomDetector* pDet = smart_cast<CCustomDetector*>(Det);
+					if (!pDet->IsWorking()) Reload(); 
+				}
 			}
 
 			return true;
@@ -977,6 +987,7 @@ bool CWeaponMagazined::Detach(const char* item_section_name, bool b_spawn_item)
 			return true;
 		}
 		m_flagsAddOnState &= ~CSE_ALifeItemWeapon::eWeaponAddonScope;
+		current_mark = 0;
 		UpdateAltScope();
 		UpdateAddonsVisibility();
 		InitAddons();
@@ -1059,6 +1070,11 @@ void CWeaponMagazined::InitAddons()
 				else
 				{
 					bScopeHasTexture = false;
+
+					bool bHasCoustomMark = LoadMarks(GetScopeName().c_str());
+
+					if (!bHasCoustomMark)
+						LoadDefaultMark();
 				}
 			}
 			else
